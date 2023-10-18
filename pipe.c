@@ -14,11 +14,18 @@ int main(int argc, char *argv[])
 	//iterate through the arguments
 	for (int i =0; i < argc -1; i++){
 		//create pipe for all (maybe not last)
+		if (i < argc -2){
+			if(pipe(pipefds)==-1){
+				exit;
+			}
+		}
 		//check for pipe error to exit
 		pid_t child_pid = fork();
+
 		if (child_pid == -1){
 			exit;
 		}//remember to check child error
+
 		if (child_pid ==0){
 			if (i>0){
 				//in child process, not first arg
@@ -26,7 +33,7 @@ int main(int argc, char *argv[])
 				dup2(pipefds[0], STDIN_FILENO);
 				close(pipefds[1]); //close write end
 			}
-			if(i< argc -1){
+			if(i< argc -2){
 				//output to the pipe
 				dup2(pipefds[1], STDOUT_FILENO);
 			}
@@ -39,7 +46,7 @@ int main(int argc, char *argv[])
 			if(i>0){
 				close(pipefds[0]);
 			}
-			if(i < argc -1){
+			if(i < argc -2){
 				close(pipefds[1]);
 			}
 			//something about waiting? check this
@@ -47,11 +54,6 @@ int main(int argc, char *argv[])
 			waitpid(child_pid, &status, 0);
 		}
 	}
-
-
-
-
-	
 
 	return 0;
 }
