@@ -7,14 +7,18 @@
 int main(int argc, char *argv[])
 {
 	// TODO: it's all yours
-	
+	if (argc <1){
+		exit;
+	}
 	//make some kind of error if no args? 
-	int pipefds[2];
 
 	//iterate through the arguments
 	for (int i =0; i < argc -1; i++){
+		
+		int pipefds[2];
+
 		//create pipe for all (maybe not last)
-		if (i < argc -2){
+		if (i < argc -2){ //from 2 to 1
 			if(pipe(pipefds)==-1){
 				exit;
 			}
@@ -39,7 +43,7 @@ int main(int argc, char *argv[])
 			}
 			//are there any other fds open i need to close??
 			//execute time!!
-			execlp(argv[i+1], argv[i+1], NULL);
+			execlp(argv[i + 1], argv[i+1], NULL);
 			exit;
 		}else{
 			//in the parent
