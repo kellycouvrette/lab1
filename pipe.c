@@ -3,13 +3,15 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/wait.h>
-
+#include <errno.h>
 int main(int argc, char *argv[])
 {
 	// TODO: it's all yours
-	if (argc <1){
-		exit;
+	if (argc <2){	
+		errno = EINVAL;
+		exit(errno);
 	}
+	
 	//make some kind of error if no args? 
 	int pipefds[2];
 	int prev_read_fd = -1;//
@@ -17,18 +19,19 @@ int main(int argc, char *argv[])
 	for (int i =0; i < argc -1; i++){
 		
 		//int pipefds[2];
-
+		
 		//create pipe for all (maybe not last)
 		if (i < argc -2){ //from 2 to 1
 			if(pipe(pipefds)==-1){
-				exit;
+				exit(errno);
 			}
 		}
+		
 		//check for pipe error to exit
 		pid_t child_pid = fork();
 
 		if (child_pid == -1){
-			exit;
+			exit(errno);
 		}//remember to check child error
 
 		if (child_pid ==0){
@@ -50,8 +53,13 @@ int main(int argc, char *argv[])
 			//are there any other fds open i need to close??
 			//execute time!!
 			//printf("argv is %s\n", argv[i+1]);
-			execlp(argv[i + 1], argv[i+1], NULL);
-			exit;
+
+			if(execlp(argv[i + 1], argv[i+1], NULL) == -1){
+				perror("execlp");
+				exit(errno);
+			}
+			perror("execlp");
+			exit(errno);
 		}else{
 			//in the parent
 			// if(i>0){
@@ -66,7 +74,12 @@ int main(int argc, char *argv[])
 			}
 			//something about waiting? check this
 			int status;
-			waitpid(child_pid, &status, 0);
+			if(waitpid(child_pid, &status, 0) == -1){
+				exit(status);
+			}
+			if(status != 0){
+				exit(2);
+			}
 		}
 	}
 
