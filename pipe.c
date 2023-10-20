@@ -11,11 +11,12 @@ int main(int argc, char *argv[])
 		exit;
 	}
 	//make some kind of error if no args? 
-
+	int pipefds[2];
+	int prev_read_fd = -1;//
 	//iterate through the arguments
 	for (int i =0; i < argc -1; i++){
 		
-		int pipefds[2];
+		//int pipefds[2];
 
 		//create pipe for all (maybe not last)
 		if (i < argc -2){ //from 2 to 1
@@ -32,25 +33,35 @@ int main(int argc, char *argv[])
 
 		if (child_pid ==0){
 			if (i>0){
+				//!!!!close(pipefds[1]);
 				//in child process, not first arg
 				//redirect input from pipe. dup time!!
-				dup2(pipefds[0], STDIN_FILENO);
-				close(pipefds[1]); //close write end
+				//dup2(pipefds[0], STDIN_FILENO);
+				dup2(prev_read_fd, STDIN_FILENO);
+				close(prev_read_fd);
+				//close(pipefds[1]); //close write end
 			}
 			if(i< argc -2){
 				//output to the pipe
 				dup2(pipefds[1], STDOUT_FILENO);
+				close(pipefds[0]);//
+				close(pipefds[1]);
 			}
 			//are there any other fds open i need to close??
 			//execute time!!
+			//printf("argv is %s\n", argv[i+1]);
 			execlp(argv[i + 1], argv[i+1], NULL);
 			exit;
 		}else{
 			//in the parent
-			if(i>0){
-				close(pipefds[0]);
+			// if(i>0){
+			// 	close(pipefds[0]);
+			// }
+			if(prev_read_fd != -1){
+				close(prev_read_fd);
 			}
 			if(i < argc -2){
+				prev_read_fd = pipefds[0];
 				close(pipefds[1]);
 			}
 			//something about waiting? check this
