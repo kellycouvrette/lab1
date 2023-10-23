@@ -23,7 +23,7 @@ int main(int argc, char *argv[])
 		//create pipe for all (maybe not last)
 		if (i < argc -2){ //from 2 to 1
 			if(pipe(pipefds)==-1){
-				exit(errno);
+				exit(EXIT_FAILURE);
 			}
 		}
 		
@@ -31,7 +31,7 @@ int main(int argc, char *argv[])
 		pid_t child_pid = fork();
 
 		if (child_pid == -1){
-			exit(errno);
+			exit(EXIT_FAILURE);
 		}//remember to check child error
 
 		if (child_pid ==0){
@@ -55,11 +55,9 @@ int main(int argc, char *argv[])
 			//printf("argv is %s\n", argv[i+1]);
 
 			if(execlp(argv[i + 1], argv[i+1], NULL) == -1){
-				perror("execlp");
-				exit(errno);
+				exit(EXIT_FAILURE);
 			}
-			perror("execlp");
-			exit(errno);
+			exit(EXIT_FAILURE);
 		}else{
 			//in the parent
 			// if(i>0){
@@ -74,11 +72,16 @@ int main(int argc, char *argv[])
 			}
 			//something about waiting? check this
 			int status;
-			if(waitpid(child_pid, &status, 0) == -1){
-				exit(status);
-			}
-			if(status != 0){
-				exit(2);
+			if(waitpid(child_pid, &status, 0) != -1){
+				if(WIFEXITED(status)){
+					if (WEXITSTATUS(status) !=0){
+						exit(WEXITSTATUS(status));
+					}
+				} else{
+					exit(EXIT_FAILURE);
+				}
+			}else{
+				exit(EXIT_FAILURE);
 			}
 		}
 	}
